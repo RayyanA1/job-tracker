@@ -1,0 +1,39 @@
+.next-card > p {
+  font-size: 13px;
+  margin-top: 7px;
+}
+.next-card {
+  background: #f0f5ee;
+}
+.save-hint {
+  font-size: 12px;
+  text-align: center;
+}
+@media (max-width: 800px) {
+  .detail-side {
+    order: -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+}
+@media (max-width: 800px) {
+  .save-hint {
+    display: none;
+  }
+}
+@media (max-width: 800px) {
+  .detail-side .card {
+    margin: 0;
+  }
+}
+@media (max-width: 480px) {
+  .detail-side {
+    display: block;
+  }
+}
+@media (max-width: 480px) {
+  .detail-side .card {
+    margin-bottom: 15px;
+  }
+}

@@ -1,0 +1,249 @@
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 19px;
+  margin-bottom: 32px;
+}
+.stats > div {
+  background: white;
+  border: 1px solid #e0e8e3;
+  border-radius: 10px;
+  padding: 22px 24px;
+}
+.stats > div > span {
+  font-size: 14px;
+  color: #6e7d75;
+}
+.stats strong {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  font-family: Manrope, sans-serif;
+  font-size: 31px;
+  margin-top: 11px;
+  line-height: 1;
+}
+.stats small {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: #96a098;
+  font-weight: 400;
+}
+.list-panel {
+  border: 1px solid #e0e7e2;
+  border-radius: 11px;
+  background: #fff;
+  overflow: hidden;
+}
+.list-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px;
+}
+.count {
+  font:
+    500 12px 'DM Sans',
+    sans-serif;
+  padding: 3px 8px;
+  background: #eff3ef;
+  border-radius: 5px;
+  margin-left: 8px;
+  color: #6d8173;
+}
+.toolbar {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 23px;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  border: 1px solid #dfe5e1;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: #8a968e;
+}
+.search input {
+  border: 0;
+  padding: 10px 0;
+  min-width: 0;
+  background: none;
+  box-shadow: none !important;
+}
+.toolbar select {
+  width: auto;
+  font-size: 13px;
+}
+.table-scroll {
+  overflow: auto;
+}
+.list-panel table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+.list-panel th {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a978e;
+  font-weight: 600;
+  background: #f8faf8;
+  padding: 14px 23px;
+  border-block: 1px solid #e9eee9;
+}
+.list-panel td {
+  padding: 22px 23px;
+  border-bottom: 1px solid #edf0ed;
+  font-size: 13px;
+  vertical-align: middle;
+}
+.list-panel tr:last-child td {
+  border-bottom: 0;
+}
+.company-link {
+  text-align: left;
+  padding: 0;
+  justify-content: flex-start;
+  min-width: 180px;
+}
+.company-link strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.company-link small {
+  display: block;
+  margin-top: 5px;
+  color: #8b958d;
+  font-size: 12px;
+}
+.company-icon {
+  width: 37px;
+  height: 37px;
+  background: #f0f3ef;
+  border: 1px solid #e4eae2;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-family: Manrope, sans-serif;
+  flex-shrink: 0;
+}
+.stage-cell {
+  max-width: 200px;
+  color: #65766b;
+  line-height: 1.7;
+}
+.action-text {
+  display: block;
+  max-width: 240px;
+  line-height: 1.5;
+}
+.due {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #929c95;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.table-footer {
+  padding: 15px 24px;
+  border-top: 1px solid #e9eee9;
+  display: flex;
+  justify-content: space-between;
+  color: #909c93;
+  font-size: 12px;
+}
+.table-footer span {
+  font-style: italic;
+}
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+}
+.empty h3 {
+  font-size: 21px;
+  margin-bottom: 9px;
+}
+.empty p {
+  font-size: 14px;
+  margin-bottom: 23px;
+}
+@media (min-width: 1500px) {
+  .list-panel td {
+    padding-block: 25px;
+  }
+}
+@media (max-width: 1150px) {
+  .stats small {
+    display: none;
+  }
+}
+@media (max-width: 1150px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 1150px) {
+  .search {
+    min-width: 220px;
+  }
+}
+@media (max-width: 800px) {
+  .stats {
+    gap: 9px;
+  }
+}
+@media (max-width: 800px) {
+  .stats > div {
+    padding: 16px;
+  }
+}
+@media (max-width: 800px) {
+  .stats > div > span {
+    font-size: 12px;
+  }
+}
+@media (max-width: 800px) {
+  .stats strong {
+    font-size: 26px;
+  }
+}
+@media (max-width: 800px) {
+  .table-footer span {
+    display: none;
+  }
+}
+@media (max-width: 800px) {
+  .toolbar {
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 800px) {
+  .list-top {
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 800px) {
+  .search {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 800px) {
+  .toolbar select {
+    flex: 1;
+  }
+}
+@media (max-width: 480px) {
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .stats > div:last-child {
+    display: none;
+  }
+}

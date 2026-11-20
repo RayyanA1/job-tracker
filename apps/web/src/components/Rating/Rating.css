@@ -1,0 +1,10 @@
+.stars {
+  display: flex;
+  color: #bb9b50;
+  gap: 3px;
+  white-space: nowrap;
+}
+.stars button {
+  padding: 1px;
+  color: inherit;
+}

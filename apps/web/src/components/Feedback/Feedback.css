@@ -1,0 +1,27 @@
+.error {
+  background: #fcece8;
+  border: 1px solid #edc7bd;
+  color: #934e3c;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.toast {
+  position: fixed;
+  right: 35px;
+  bottom: 25px;
+  background: #194b38;
+  color: white;
+  border-radius: 8px;
+  padding: 14px 20px;
+  z-index: 50;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 14px;
+  box-shadow: 0 5px 25px #163b3822;
+}

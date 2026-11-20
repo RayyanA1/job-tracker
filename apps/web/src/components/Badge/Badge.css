@@ -1,0 +1,25 @@
+.badge {
+  font-size: 12px;
+  display: inline-block;
+  white-space: nowrap;
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: #e9eef8;
+  color: #6477a3;
+}
+.badge.interviewing {
+  background: #fbf2df;
+  color: #9c7836;
+}
+.badge.offer {
+  background: #e5f2e8;
+  color: #3c8353;
+}
+.badge.rejected {
+  background: #f7e9e7;
+  color: #ac6c63;
+}
+.badge.withdrawn {
+  background: #eeedf1;
+  color: #82798b;
+}

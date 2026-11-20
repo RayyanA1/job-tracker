@@ -1,0 +1,30 @@
+{
+  "name": "job-tracker",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker compose up -d --wait db && concurrently -k -n api,web \"npm run dev -w @tracker/api\" \"npm run dev -w @tracker/web\"",
+    "start": "docker compose up --build -d --wait",
+    "stop": "docker compose down",
+    "build": "npm run build -w @tracker/web",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "@types/pg": "^8.15.6",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "concurrently": "^9.2.1",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.1"
+  }
+}

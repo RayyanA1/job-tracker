@@ -1,0 +1,13 @@
+.item-controls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.current-label {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #528565;
+  background: #e3efe5;
+  padding: 3px 6px;
+  border-radius: 4px;
+}

@@ -1,0 +1,42 @@
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 24px;
+}
+.back {
+  font-size: 13px;
+  padding: 0;
+  margin-bottom: 24px;
+  color: #6f8375;
+}
+.editor-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.save-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #dce5db;
+  padding-top: 22px;
+  font-size: 13px;
+  color: #8c9a8f;
+}
+@media (max-width: 1150px) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+}
+@media (max-width: 800px) {
+  .detail-layout {
+    display: flex;
+    flex-direction: column;
+  }
+}
+@media (max-width: 800px) {
+  .save-bar span {
+    max-width: 55%;
+  }
+}
