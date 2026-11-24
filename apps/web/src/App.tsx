@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import type { JobPosting } from '@tracker/shared';
+import { CvLibraryPage } from './pages/cvs/CvLibraryPage';
 import { AppShell } from './components/AppShell/AppShell';
 import { ErrorMessage, Toast } from './components/Feedback/Feedback';
 import { ApplicationsPage } from './pages/applications/ApplicationsPage';
@@ -8,17 +11,39 @@ import { useApplicationFilters } from './pages/applications/useApplicationFilter
 export function App() {
   const tracker = useApplicationTracker();
   const filters = useApplicationFilters();
+  const [cvPage, setCvPage] = useState<{
+    application: { id: string; job: JobPosting } | null;
+  } | null>(null);
+  function createCv() {
+    if (!tracker.selected || !tracker.draft) return;
+    const { company, role, jobLink } = tracker.draft;
+    setCvPage({
+      application: {
+        id: tracker.selected.id,
+        job: { company, title: role, url: jobLink, description: '' },
+      },
+    });
+  }
   return (
     <AppShell
       applicationCount={tracker.apps.length}
-      company={tracker.selected?.company}
-      onBack={tracker.back}
+      company={cvPage ? undefined : tracker.selected?.company}
+      showingCvs={!!cvPage}
+      onCvLibrary={() =>
+        setCvPage((current) => current ?? { application: null })
+      }
+      onBack={() => (cvPage ? setCvPage(null) : tracker.back())}
     >
       {tracker.notice && <Toast message={tracker.notice} />}
       {tracker.error && !tracker.adding && (
         <ErrorMessage error={tracker.error} onDismiss={tracker.dismissError} />
       )}
-      {tracker.selected && tracker.draft ? (
+      {cvPage ? (
+        <CvLibraryPage
+          application={cvPage.application}
+          onReturn={() => setCvPage(null)}
+        />
+      ) : tracker.selected && tracker.draft ? (
         <ApplicationDetailPage
           selected={tracker.selected}
           draft={tracker.draft}
@@ -27,6 +52,7 @@ export function App() {
           dirty={tracker.dirty}
           onBack={tracker.back}
           onSave={tracker.save}
+          onCreateCv={createCv}
         />
       ) : (
         <ApplicationsPage

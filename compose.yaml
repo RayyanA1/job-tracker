@@ -21,6 +21,13 @@ services:
     environment:
       DATABASE_URL: postgres://tracker:tracker_local@db:5432/tracker
       NODE_ENV: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      CV_PROFILE_DIR: /app/.cv-data
+      CV_PDF_DIR: /cv-pdfs
+    volumes:
+      - ./.cv-data:/app/.cv-data
+      - cv_pdfs:/cv-pdfs
     depends_on:
       db:
         condition: service_healthy
@@ -37,3 +44,4 @@ services:
       retries: 30
 volumes:
   tracker_data:
+  cv_pdfs:

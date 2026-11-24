@@ -1,0 +1,41 @@
+export type JobPosting = {
+  url: string;
+  company: string;
+  title: string;
+  description: string;
+};
+
+export type CvClaim = { text: string; sources: { id: string; text: string }[] };
+export type CvBullet = { claim: CvClaim; project?: string };
+export type CvDocument = {
+  name: string;
+  contact: string[];
+  links: string;
+  headline: string;
+  summary: CvClaim[];
+  skills: string[];
+  experience: {
+    employer: string;
+    title: string;
+    dates: string;
+    bullets: CvBullet[];
+  }[];
+  projects: CvBullet[];
+  education: string[];
+};
+
+export type CvVersion = {
+  id: string;
+  name: string;
+  createdAt: string;
+  kind: 'generated' | 'imported';
+  company: string;
+  title: string;
+  url: string;
+};
+
+export type CvDraft = {
+  id: string;
+  document: CvDocument;
+  pages: number;
+};

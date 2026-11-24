@@ -7,6 +7,7 @@ import { OpportunitySection } from './OpportunitySection';
 import { QuestionsSection } from './QuestionsSection';
 import { InterviewStagesSection } from './InterviewStagesSection';
 import { ApplicationSidebar } from './ApplicationSidebar';
+import { CvAttachment } from '../cvs/CvAttachment';
 import './ApplicationDetailPage.css';
 export function ApplicationDetailPage({
   selected,
@@ -16,12 +17,14 @@ export function ApplicationDetailPage({
   dirty,
   onBack,
   onSave,
+  onCreateCv,
 }: ApplicationEditorProps & {
   selected: Application;
   saving: boolean;
   dirty: boolean;
   onBack: () => void;
   onSave: (event: FormEvent) => void;
+  onCreateCv: () => void;
 }) {
   return (
     <form onSubmit={onSave}>
@@ -42,6 +45,11 @@ export function ApplicationDetailPage({
         <div className="detail-layout">
           <div className="detail-main">
             <OpportunitySection draft={draft} patch={patch} />
+            <CvAttachment
+              key={selected.id}
+              applicationId={selected.id}
+              onCreate={onCreateCv}
+            />
             <QuestionsSection draft={draft} patch={patch} />
             <InterviewStagesSection draft={draft} patch={patch} />
           </div>
