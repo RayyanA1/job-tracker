@@ -217,11 +217,8 @@ export function CvLibraryPage({
                 </button>
               )}
             </div>
-            {draft.pages > 1 && (
-              <p role="status">
-                This draft spans {draft.pages} pages. Check the layout in the
-                PDF preview.
-              </p>
+            {draft.trimmed && (
+              <p role="status">The draft was shortened to fit one A4 page.</p>
             )}
             <p>
               <strong>{draft.document.headline}</strong>

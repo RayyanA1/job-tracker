@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import type { Pool } from 'pg';
 import type { CvDocument, CvVersion } from '@tracker/shared';
 import { CvError, profileDirectory } from './profile.ts';
-import { renderCv } from './pdf.ts';
+import { fitCv } from './pdf.ts';
 
 type Metadata = Omit<CvVersion, 'id' | 'createdAt'>;
 type Row = {
@@ -65,9 +65,9 @@ export function createCvsRepository(pool: Pool, owner: string) {
       return rows.map(version);
     },
     async draft(metadata: Metadata, document: CvDocument) {
-      const { pages } = await renderCv(document);
-      const { id } = await insert(metadata, document);
-      return { id, document, pages };
+      const fitted = await fitCv(document);
+      const { id } = await insert(metadata, fitted.document);
+      return { id, document: fitted.document, trimmed: fitted.trimmed };
     },
     async import(name: string, bytes: Buffer) {
       const id = randomUUID();
@@ -91,10 +91,11 @@ export function createCvsRepository(pool: Pool, owner: string) {
         if (!row) throw missing();
         if (!row.saved) {
           if (!row.document) throw missing();
-          await storePdf(id, (await renderCv(row.document)).bytes);
+          const fitted = await fitCv(row.document);
+          await storePdf(id, fitted.bytes);
           await connection.query(
-            'UPDATE cv_versions SET saved=true WHERE id=$1 AND owner_id=$2',
-            [id, owner],
+            'UPDATE cv_versions SET saved=true,document=$3 WHERE id=$1 AND owner_id=$2',
+            [id, owner, fitted.document],
           );
         }
         await connection.query('COMMIT');
@@ -123,7 +124,7 @@ export function createCvsRepository(pool: Pool, owner: string) {
             throw error;
           })
         : row.document
-          ? (await renderCv(row.document)).bytes
+          ? (await fitCv(row.document)).bytes
           : null;
       if (!bytes) throw missing();
       return { bytes, name: row.metadata.name };

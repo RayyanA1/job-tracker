@@ -208,9 +208,10 @@ export async function buildDocument(
   );
   const byRole = new Map<string, CvBullet[]>();
   const projects: CvBullet[] = [];
-  for (const [id, claim] of bullets) {
+  for (const [priority, [id, claim]] of [...bullets].entries()) {
     const entry = entries.get(id)!;
     const bullet: CvBullet = {
+      priority,
       claim: approved.has(claim)
         ? claim
         : { ...claim, text: exactBullet(entry) },

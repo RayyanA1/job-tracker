@@ -6,7 +6,7 @@ export type JobPosting = {
 };
 
 export type CvClaim = { text: string; sources: { id: string; text: string }[] };
-export type CvBullet = { claim: CvClaim; project?: string };
+export type CvBullet = { claim: CvClaim; project?: string; priority?: number };
 export type CvDocument = {
   name: string;
   contact: string[];
@@ -37,5 +37,5 @@ export type CvVersion = {
 export type CvDraft = {
   id: string;
   document: CvDocument;
-  pages: number;
+  trimmed: boolean;
 };
