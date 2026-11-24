@@ -3,9 +3,11 @@ import type {
   CvBullet,
   CvClaim,
   CvDocument,
+  CvProfile,
+  CvProfileEntry,
   JobPosting,
 } from '@tracker/shared';
-import { CvError, type Profile } from './profile.ts';
+import { CvError } from './profile.ts';
 
 const id = z.string().max(100);
 const rewrite = z.strictObject({
@@ -92,17 +94,11 @@ export const generateWithGemini: Generate = async (
   }
 };
 
-function factText(entry: Profile['entries'][number]) {
+function factText(entry: CvProfileEntry) {
   return [
     entry.name,
     ...Object.entries(entry.fields)
-      .filter(
-        ([field, text]) =>
-          text &&
-          !['Skills', 'Evidence', 'Associated role', 'Public link'].includes(
-            field,
-          ),
-      )
+      .filter(([field, text]) => text && field !== 'Public link')
       .map(([field, text]) => `${field}: ${text}`),
   ].join('\n');
 }
@@ -115,7 +111,7 @@ function metricTokens(text: string) {
   );
 }
 
-function exactBullet(entry: Profile['entries'][number]) {
+function exactBullet(entry: CvProfileEntry) {
   return [entry.fields.Contribution, entry.fields.Outcome, entry.fields.Metric]
     .filter((text): text is string => Boolean(text))
     .map((text) => (/[.!?]$/.test(text) ? text : `${text}.`))
@@ -123,7 +119,7 @@ function exactBullet(entry: Profile['entries'][number]) {
 }
 
 export async function buildDocument(
-  profile: Profile,
+  profile: CvProfile,
   job: JobPosting,
   generate = generateWithGemini,
 ): Promise<CvDocument> {
@@ -228,7 +224,7 @@ export async function buildDocument(
 
   return {
     name: profile.name,
-    contact: profile.contact,
+    contact: [profile.location, profile.email, profile.phone].filter(Boolean),
     links: profile.links,
     headline,
     summary: summary.filter((claim) => approved.has(claim)),

@@ -1,11 +1,17 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { buildDocument } from './generation.ts';
 import { extractPosting, publicAddress } from './postings.ts';
-import { parseProfile } from './profile.ts';
+import {
+  loadProfile,
+  parseLegacyProfile,
+  parseProfileJson,
+} from './profile.ts';
 import { renderCv } from './pdf.ts';
 
-const profile = parseProfile(`
+const legacyProfile = `
 ## Identity
 - Name: Example Candidate
 - Email: private@example.com
@@ -32,7 +38,10 @@ const profile = parseProfile(`
 ### [tool] Example Tool
 - Associated role: role
 - Contribution: Built a reporting tool.
-`);
+`;
+const profile = parseProfileJson(
+  JSON.stringify(parseLegacyProfile(legacyProfile)),
+);
 const job = {
   url: 'https://example.com/jobs/example',
   description: 'Senior AWS Engineer using AWS and TypeScript',
@@ -41,27 +50,89 @@ const job = {
 };
 
 describe('profile and CV generation', () => {
-  it('allows copying the blank Markdown template without treating placeholders as facts', async () => {
+  it('loads the blank JSON template without introducing any facts', async () => {
     const template = await readFile(
-      new URL('../../../../cv-profile.template.md', import.meta.url),
+      new URL('../../../../cv-profile.template.json', import.meta.url),
       'utf8',
     );
-    expect(parseProfile(template)).toMatchObject({
+    expect(parseProfileJson(template)).toMatchObject({
       name: '',
       headlines: [],
       entries: [],
     });
   });
 
-  it('refuses a skill suggested by the job that has no profile source', async () => {
-    const generate = vi
-      .fn()
-      .mockResolvedValue({
-        headlineIndex: 0,
-        skillIds: ['aws'],
-        summary: [],
-        bullets: [],
+  it('migrates legacy facts and keeps the JSON authoritative for each owner', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'cv-profile-'));
+    vi.stubEnv('CV_PROFILE_DIR', directory);
+    try {
+      const owner = join(directory, 'first');
+      await mkdir(owner);
+      const legacyPath = join(owner, 'profile.md');
+      const jsonPath = join(owner, 'profile.json');
+      await writeFile(legacyPath, legacyProfile);
+      const results = await Promise.all([
+        loadProfile('first'),
+        loadProfile('first'),
+      ]);
+      expect(results).toEqual([profile, profile]);
+      expect(await readFile(legacyPath, 'utf8')).toBe(legacyProfile);
+      expect(parseProfileJson(await readFile(jsonPath, 'utf8'))).toEqual(
+        profile,
+      );
+      expect(profile.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'typescript', evidence: ['latency'] }),
+          expect.objectContaining({
+            id: 'latency',
+            roleId: 'role',
+            skills: ['typescript'],
+          }),
+          expect.objectContaining({ id: 'tool', roleId: 'role' }),
+        ]),
+      );
+      await writeFile(
+        jsonPath,
+        JSON.stringify({ ...profile, name: 'Edited Name' }),
+      );
+      expect(await loadProfile('first')).toMatchObject({ name: 'Edited Name' });
+      expect(await loadProfile('second')).toMatchObject({
+        name: '',
+        entries: [],
       });
+      await writeFile(jsonPath, '{');
+      await expect(loadProfile('first')).rejects.toThrow('invalid JSON');
+    } finally {
+      vi.unstubAllEnvs();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects invalid skill references in JSON', () => {
+    expect(() =>
+      parseProfileJson(
+        JSON.stringify({
+          entries: [
+            {
+              id: 'example',
+              name: 'Example',
+              kind: 'project',
+              fields: { Contribution: 'Built a tool.' },
+              skills: ['unknown'],
+            },
+          ],
+        }),
+      ),
+    ).toThrow('unknown skill ID unknown');
+  });
+
+  it('refuses a skill suggested by the job that has no profile source', async () => {
+    const generate = vi.fn().mockResolvedValue({
+      headlineIndex: 0,
+      skillIds: ['aws'],
+      summary: [],
+      bullets: [],
+    });
     await expect(buildDocument(profile, job, generate)).rejects.toThrow(
       'outside your profile',
     );

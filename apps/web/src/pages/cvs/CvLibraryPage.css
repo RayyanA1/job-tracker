@@ -49,3 +49,23 @@
 .cv-error {
   color: #a12424;
 }
+.cv-view-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid #dfe7e0;
+}
+.cv-view-switch button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #486257;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.cv-view-switch button[aria-pressed='true'] {
+  border-color: #287059;
+  color: #174b3a;
+  background: #edf5ef;
+}

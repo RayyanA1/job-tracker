@@ -46,6 +46,9 @@ export function createCvRouter(pool: Pool, owner: string) {
   router.get('/', async (_req, res) => {
     res.json(await repository.list());
   });
+  router.get('/profile', async (_req, res) => {
+    res.json(await loadProfile(owner));
+  });
   router.post('/posting', async (req, res) => {
     const { url } = validated(z.object({ url: httpUrl }), req.body);
     res.json(await importPosting(url));

@@ -4,6 +4,7 @@ import { cvApi } from '../../api/cvs';
 import { Card } from '../../components/Card/Card';
 import { Field } from '../../components/Field/Field';
 import { PageHeading } from '../../components/PageHeading/PageHeading';
+import { CvProfileView } from './CvProfileView';
 import './CvLibraryPage.css';
 
 const blankJob = { url: '', company: '', title: '', description: '' };
@@ -29,6 +30,7 @@ export function CvLibraryPage({
   application: { id: string; job: JobPosting } | null;
   onReturn: () => void;
 }) {
+  const [showProfile, setShowProfile] = useState(false);
   const [job, setJob] = useState(application?.job ?? blankJob);
   const [versions, setVersions] = useState<CvVersion[]>([]);
   const [draft, setDraft] = useState<CvDraft | null>(null);
@@ -122,8 +124,8 @@ export function CvLibraryPage({
     });
   }
 
-  return (
-    <div className="cv-stack">
+  const header = (
+    <>
       {application && (
         <button type="button" className="back" onClick={onReturn}>
           Back to application
@@ -135,12 +137,46 @@ export function CvLibraryPage({
       >
         <button
           className="primary"
-          onClick={() => setCreating(true)}
-          disabled={creating}
+          onClick={() => {
+            setShowProfile(false);
+            setCreating(true);
+          }}
+          disabled={creating && !showProfile}
         >
           Create CV
         </button>
       </PageHeading>
+      <nav className="cv-view-switch" aria-label="CV Library views">
+        <button
+          type="button"
+          aria-pressed={!showProfile}
+          onClick={() => setShowProfile(false)}
+        >
+          Saved Versions
+        </button>
+        <button
+          type="button"
+          aria-pressed={showProfile}
+          onClick={() => setShowProfile(true)}
+        >
+          CV Profile
+        </button>
+      </nav>
+    </>
+  );
+
+  if (showProfile) {
+    return (
+      <div className="cv-stack">
+        {header}
+        <CvProfileView />
+      </div>
+    );
+  }
+
+  return (
+    <div className="cv-stack">
+      {header}
       {error && (
         <p className="cv-error" role="alert">
           {error}

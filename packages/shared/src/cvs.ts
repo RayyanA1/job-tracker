@@ -1,3 +1,25 @@
+export type CvProfileEntry = {
+  id: string;
+  name: string;
+  kind: 'role' | 'achievement' | 'project' | 'skill' | 'education';
+  fields: Record<string, string>;
+  roleId?: string | undefined;
+  skills: string[];
+  evidence: string[];
+};
+
+export type CvProfile = {
+  name: string;
+  location: string;
+  email: string;
+  phone: string;
+  links: string;
+  headlines: string[];
+  background: string;
+  interests: string;
+  entries: CvProfileEntry[];
+};
+
 export type JobPosting = {
   url: string;
   company: string;

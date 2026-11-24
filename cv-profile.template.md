@@ -1,49 +1,58 @@
-# CV profile
+# CV profile field guide
 
-## Identity
+Copy `cv-profile.template.json` to `.cv-data/local/profile.json`, or open **CV Profile** in the CV Library to initialise it. Edit the private copy and reopen **CV Profile** to review the facts. The CV creator uses the same file.
 
-- Name: [Full name]
-- Location: [City, country or remote preference]
-- Email: [Email]
-- Phone: [Phone]
-- Links: [LinkedIn, portfolio or GitHub]
+## Identity and professional background
 
-## Professional profile
+- `name`, `location`, `email`, `phone`, and `links` are text. Leave unused contact fields blank. The app fills contact details into the CV locally.
+- `headlines` lists the accurate titles or specialties Gemini can choose from for a job. Add at least one before generating a CV.
+- `background` holds your factual professional summary. `interests` describes the domains, problems, or technologies you want to work on.
 
-- Supported CV headlines: [Accurate titles or specialties, separated by |]
-- Background: [Short factual summary]
-- Interests: [Domains, problems or technologies you want to work on]
+## Career facts
 
-## Skills
+Each entry has a unique `id`, a `name` and a `kind`. Use lowercase letters, digits and hyphens in IDs. The app reserves `background` and `interests` for the matching profile fields. Keep IDs stable when editing entries so other entries can continue to refer to them.
 
-- [skill-id] [Technology or skill]
-  - Evidence: [Comma-separated role, project or achievement IDs]
+| Kind          | Name                                                       | Fields and references                                                                                                                                       |
+| ------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `role`        | Employer                                                   | `Official title` and `Dates` required. Add `Scope` for team, product or responsibilities. List roles newest first.                                          |
+| `achievement` | Short achievement label                                    | `Contribution` and a `roleId` required. Add an `Outcome`, exact `Metric`, and related `skills` when known.                                                  |
+| `project`     | Project name                                               | `Contribution` required. Add a `roleId` for projects associated with a role. Add an `Outcome`, `Metric`, `Public link`, and related `skills` as applicable. |
+| `skill`       | Technology or skill                                        | Use `evidence` to list supporting role, achievement or project IDs.                                                                                         |
+| `education`   | Qualification, institution, dates and result if applicable | Put the details you want on a CV in the name.                                                                                                               |
 
-## Career history
+Here is an example `entries` array. Replace the example content with your own facts.
 
-### [role-id] [Employer]
+```json
+[
+  {
+    "id": "example-role",
+    "kind": "role",
+    "name": "Example Company",
+    "fields": {
+      "Official title": "Software Engineer",
+      "Dates": "January 2022 to Present",
+      "Scope": "Internal search platform"
+    }
+  },
+  {
+    "id": "search-latency",
+    "kind": "achievement",
+    "name": "Faster search",
+    "roleId": "example-role",
+    "fields": {
+      "Contribution": "Reworked the search request cache.",
+      "Outcome": "Reduced median response time.",
+      "Metric": "15% lower median latency over one month."
+    },
+    "skills": ["typescript"]
+  },
+  {
+    "id": "typescript",
+    "kind": "skill",
+    "name": "TypeScript",
+    "evidence": ["search-latency"]
+  }
+]
+```
 
-- Official title: [Title]
-- Dates: [Start month/year to end month/year or Present]
-- Scope: [Team, product and responsibilities]
-
-#### [achievement-id] [Achievement]
-
-- Contribution: [What you personally did]
-- Outcome: [Observed result]
-- Metric: [Exact figure and context, if known]
-- Skills: [Comma-separated skill IDs]
-
-## Projects
-
-### [project-id] [Project name]
-
-- Associated role: [Role ID, if applicable]
-- Contribution: [Your role and what you built]
-- Outcome: [Observed result, if known]
-- Skills: [Comma-separated skill IDs]
-- Public link: [Optional]
-
-## Education and certifications
-
-- [education-id] [Institution, qualification, dates and result if applicable]
+If you already have a private `profile.md`, the app copies its career facts and IDs into `profile.json` on the first profile load. Edit the JSON file thereafter.

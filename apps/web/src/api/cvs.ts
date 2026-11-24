@@ -1,7 +1,13 @@
-import type { CvDraft, CvVersion, JobPosting } from '@tracker/shared';
+import type {
+  CvDraft,
+  CvProfile,
+  CvVersion,
+  JobPosting,
+} from '@tracker/shared';
 import { api } from './client';
 
 export const cvApi = {
+  profile: () => api<CvProfile>('/cvs/profile'),
   list: () => api<CvVersion[]>('/cvs'),
   posting: (url: string) => api<JobPosting>('/cvs/posting', 'POST', { url }),
   draft: (job: JobPosting) => api<CvDraft>('/cvs/drafts', 'POST', job),
