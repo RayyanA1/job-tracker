@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { link, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseProfileJson } from '../entities/cv-profile.entity.ts';
-import { parseLegacyProfile } from '../parsing/cv-profile-legacy.parser.ts';
 import { profileDirectory } from './cv-storage-paths.ts';
 
 const template = new URL(
@@ -10,7 +9,7 @@ const template = new URL(
   import.meta.url,
 );
 
-async function readOptional(path: string | URL) {
+async function readOptional(path: string) {
   try {
     return await readFile(path, 'utf8');
   } catch (error) {
@@ -25,11 +24,7 @@ export async function loadProfile(owner: string) {
   const existing = await readOptional(path);
   if (existing !== undefined) return parseProfileJson(existing);
 
-  const legacy = await readOptional(join(directory, 'profile.md'));
-  const profile =
-    legacy === undefined
-      ? parseProfileJson(await readFile(template, 'utf8'))
-      : parseLegacyProfile(legacy);
+  const profile = parseProfileJson(await readFile(template, 'utf8'));
 
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const pending = join(directory, `.profile-${randomUUID()}.json`);

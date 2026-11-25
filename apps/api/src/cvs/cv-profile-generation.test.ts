@@ -1,43 +1,54 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { buildDocument } from './services/cv-generation.ts';
 import { parseProfileJson } from './entities/cv-profile.entity.ts';
-import { parseLegacyProfile } from './parsing/cv-profile-legacy.parser.ts';
 import { loadProfile } from './persistence/cv-profile.store.ts';
 import { renderCv } from './rendering/cv-pdf.renderer.ts';
 
-const legacyProfile = `
-## Identity
-- Name: Example Candidate
-- Email: private@example.com
-
-## Professional profile
-- Supported CV headlines: Software Engineer | Backend Engineer
-- Background: Develops internal tooling.
-
-## Skills
-- [typescript] TypeScript
-  - Evidence: latency
-
-## Career history
-### [role] Example Company
-- Official title: Software Engineer
-- Dates: 2022 - Present
-
-#### [latency] Search performance
-- Contribution: Improved search performance using TypeScript.
-- Metric: Reduced median latency by 15%.
-- Skills: typescript
-
-## Projects
-### [tool] Example Tool
-- Associated role: role
-- Contribution: Built a reporting tool.
-`;
 const profile = parseProfileJson(
-  JSON.stringify(parseLegacyProfile(legacyProfile)),
+  JSON.stringify({
+    name: 'Example Candidate',
+    email: 'private@example.com',
+    headlines: ['Software Engineer', 'Backend Engineer'],
+    background: 'Develops internal tooling.',
+    entries: [
+      {
+        id: 'typescript',
+        name: 'TypeScript',
+        kind: 'skill',
+        evidence: ['latency'],
+      },
+      {
+        id: 'role',
+        name: 'Example Company',
+        kind: 'role',
+        fields: {
+          'Official title': 'Software Engineer',
+          Dates: '2022 - Present',
+        },
+      },
+      {
+        id: 'latency',
+        name: 'Search performance',
+        kind: 'achievement',
+        roleId: 'role',
+        fields: {
+          Contribution: 'Improved search performance using TypeScript.',
+          Metric: 'Reduced median latency by 15%.',
+        },
+        skills: ['typescript'],
+      },
+      {
+        id: 'tool',
+        name: 'Example Tool',
+        kind: 'project',
+        roleId: 'role',
+        fields: { Contribution: 'Built a reporting tool.' },
+      },
+    ],
+  }),
 );
 const job = {
   url: 'https://example.com/jobs/example',
@@ -59,35 +70,18 @@ describe('profile and CV generation', () => {
     });
   });
 
-  it('migrates legacy facts and keeps the JSON authoritative for each owner', async () => {
+  it('initializes and loads the JSON profile for each owner', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'cv-profile-'));
     vi.stubEnv('CV_PROFILE_DIR', directory);
     try {
-      const owner = join(directory, 'first');
-      await mkdir(owner);
-      const legacyPath = join(owner, 'profile.md');
-      const jsonPath = join(owner, 'profile.json');
-      await writeFile(legacyPath, legacyProfile);
-      const results = await Promise.all([
+      const jsonPath = join(directory, 'first', 'profile.json');
+      const [first, concurrent] = await Promise.all([
         loadProfile('first'),
         loadProfile('first'),
       ]);
-      expect(results).toEqual([profile, profile]);
-      expect(await readFile(legacyPath, 'utf8')).toBe(legacyProfile);
-      expect(parseProfileJson(await readFile(jsonPath, 'utf8'))).toEqual(
-        profile,
-      );
-      expect(profile.entries).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ id: 'typescript', evidence: ['latency'] }),
-          expect.objectContaining({
-            id: 'latency',
-            roleId: 'role',
-            skills: ['typescript'],
-          }),
-          expect.objectContaining({ id: 'tool', roleId: 'role' }),
-        ]),
-      );
+      expect(first).toMatchObject({ name: '', headlines: [], entries: [] });
+      expect(concurrent).toEqual(first);
+      expect(JSON.parse(await readFile(jsonPath, 'utf8'))).toEqual(first);
       await writeFile(
         jsonPath,
         JSON.stringify({ ...profile, name: 'Edited Name' }),

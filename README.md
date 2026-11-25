@@ -86,7 +86,7 @@ With the Docker app running, execute `node scripts/verify-persistence.mjs`. It c
 
 ## CV library and creator
 
-1. Open **CV Library → CV Profile** to initialise your private `.cv-data/local/profile.json` from `cv-profile.template.json`, or copy the template there yourself. Fill it in using the examples in [the profile field guide](cv-profile.template.md). Reopen **CV Profile** to see your career timeline and the facts available for generation. Existing `profile.md` data is migrated automatically the first time the app loads your profile. Future changes go in `profile.json`.
+1. Open **CV Library → CV Profile** to initialise your private `.cv-data/local/profile.json` from `cv-profile.template.json`, or copy the template there yourself. Fill in `profile.json` using the examples in [the profile field guide](cv-profile.template.md). Reopen **CV Profile** to see your career timeline and the facts available for generation.
 2. Copy `.env.example` to `.env` and set `GEMINI_API_KEY`. Restart the tracker after changing the file. `GEMINI_MODEL` optionally selects a model that supports structured output.
 3. Open **CV Library** or **Create CV** on an application. Read the job URL or paste a description, check the job details, then generate a draft. Review its PDF and source facts before saving. Generated CVs fit one A4 page. The creator drops less relevant details to fit and asks you to shorten the profile if the core sections take more than a page. Use the application’s CV selector to attach a specific version.
 4. To keep a PDF you already have, use **Import an existing CV** in the library.
