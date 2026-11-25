@@ -5,7 +5,7 @@ import type { loadProfile } from '../persistence/cv-profile.store.ts';
 import type { CvVersionRepository } from '../persistence/cv-version.repository.ts';
 import type { createCvDraftService } from '../services/cv-draft.service.ts';
 import type { createCvLibraryService } from '../services/cv-library.service.ts';
-import type { importPosting } from '../services/job-posting.service.ts';
+import type { createJobPostingImporter } from '../services/job-posting.service.ts';
 import { handleCvError } from './cv-error-handler.ts';
 import {
   attachmentSchema,
@@ -19,7 +19,7 @@ import {
 type Dependencies = {
   versions: Pick<CvVersionRepository, 'list'>;
   loadProfile: () => ReturnType<typeof loadProfile>;
-  importPosting: typeof importPosting;
+  importPosting: ReturnType<typeof createJobPostingImporter>;
   createDraft: ReturnType<typeof createCvDraftService>;
   library: ReturnType<typeof createCvLibraryService>;
   attachments: ReturnType<typeof createCvAttachmentRepository>;

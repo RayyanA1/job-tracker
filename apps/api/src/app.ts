@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { handleApiError } from './http/error-handler.ts';
 import { createApplicationsRouter } from './applications/http/application.routes.ts';
 import { createApplicationsRepository } from './applications/persistence/application.repository.ts';
-import { generateWithGemini } from './cvs/clients/gemini.client.ts';
+import {
+  createGeminiGenerator,
+  generateWithGemini,
+} from './cvs/clients/gemini.client.ts';
 import { createCvRouter } from './cvs/http/cv.routes.ts';
 import { createCvAttachmentRepository } from './cvs/persistence/cv-attachment.repository.ts';
 import { createCvPdfStore } from './cvs/persistence/cv-pdf.store.ts';
@@ -12,7 +15,7 @@ import { loadProfile } from './cvs/persistence/cv-profile.store.ts';
 import { createCvVersionRepository } from './cvs/persistence/cv-version.repository.ts';
 import { createCvDraftService } from './cvs/services/cv-draft.service.ts';
 import { createCvLibraryService } from './cvs/services/cv-library.service.ts';
-import { importPosting } from './cvs/services/job-posting.service.ts';
+import { createJobPostingImporter } from './cvs/services/job-posting.service.ts';
 import { createHealthRouter } from './health/routes.ts';
 export function createApp(pool: Pool) {
   const app = express();
@@ -28,12 +31,22 @@ export function createApp(pool: Pool) {
   );
   const versions = createCvVersionRepository(pool, owner);
   const loadOwnerProfile = () => loadProfile(owner);
+  const defaultPostingModel = 'gemini-3.1-flash-lite';
+  const postingModel =
+    process.env.GEMINI_POSTING_MODEL?.trim() || defaultPostingModel;
   app.use(
     '/api/cvs',
     createCvRouter({
       versions,
       loadProfile: loadOwnerProfile,
-      importPosting,
+      importPosting: createJobPostingImporter({
+        generate: createGeminiGenerator({
+          model: postingModel,
+          maxOutputTokens: 12_288,
+          thinkingLevel:
+            postingModel === defaultPostingModel ? 'MINIMAL' : undefined,
+        }),
+      }),
       createDraft: createCvDraftService({
         loadProfile: loadOwnerProfile,
         generate: generateWithGemini,
