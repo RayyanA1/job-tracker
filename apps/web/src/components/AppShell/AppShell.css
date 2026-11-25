@@ -143,6 +143,7 @@ main {
     position: static;
     width: auto;
     flex-direction: row;
+    flex-wrap: wrap;
     padding: 16px;
     align-items: center;
     border-bottom: 1px solid #e1e8e0;
@@ -166,6 +167,9 @@ main {
 }
 @media (max-width: 800px) {
   .nav {
+    padding-inline: 8px;
+  }
+  .sidebar .nav:first-of-type {
     margin-left: auto;
   }
 }
@@ -197,5 +201,15 @@ main {
 @media (max-width: 480px) {
   .nav {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .nav svg {
+    display: none;
   }
 }

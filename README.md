@@ -72,12 +72,21 @@ Reuses the Node Starter's ES modules, TypeScript, Pino logger implementation, Vi
 
 The API creates its initial `applications` table on startup. Each application is one validated JSONB document; questions and ordered stages are saved atomically with it. Metadata lives in typed UUID and timestamp columns. This keeps v1 compact while leaving room for later migrations and normalized tables.
 
-`DATABASE_URL` and `PORT` may be supplied as process environment variables for a different database/API port. The development defaults match Compose; production Compose injects its internal database URL. `.env` files are not automatically loaded by the Node server.
+`DATABASE_URL` and `PORT` may be supplied as process environment variables for a different database/API port. The development defaults match Compose; production Compose injects its internal database URL. The Node server loads the root `.env` when present.
 
 This version is a personal local app with no authentication. Docker publishes only to localhost; its database credentials are for local development. Use authentication and private networking before hosting beyond your machine. Changes from concurrent editors use last-save-wins.
 
-Out of scope: transcripts, AI integrations, uploads, reminders, and Kanban.
+Out of scope: transcripts, reminders, and Kanban.
 
 ## Persistence verification
 
 With the Docker app running, execute `node scripts/verify-persistence.mjs`. It creates a disposable record, saves all core fields, recreates both containers, compares every field, and removes only its own test record. This briefly interrupts the local app.
+
+## CV library and creator
+
+1. Open **CV Library → CV Profile** to initialise your private `.cv-data/local/profile.json` from `cv-profile.template.json`, or copy the template there yourself. Fill it in using the examples in [the profile field guide](cv-profile.template.md). Reopen **CV Profile** to see your career timeline and the facts available for generation. Existing `profile.md` data is migrated automatically the first time the app loads your profile. Future changes go in `profile.json`.
+2. Copy `.env.example` to `.env` and set `GEMINI_API_KEY`. Restart the tracker after changing the file. `GEMINI_MODEL` optionally selects a model that supports structured output.
+3. Open **CV Library** or **Create CV** on an application. Read the job URL or paste a description, check the job details, then generate a draft. Review its PDF and source facts before saving. Generated CVs fit one A4 page. The creator drops less relevant details to fit and asks you to shorten the profile if the core sections take more than a page. Use the application’s CV selector to attach a specific version.
+4. To keep a PDF you already have, use **Import an existing CV** in the library.
+
+Generation sends the job description and profile facts needed for tailoring to Gemini. Contact fields are filled in locally. The JSON profile and PDFs are private local files and are excluded from Git and Docker builds. In development, PDFs live in `.cv-data/local/pdfs/`. In Compose, the app reads the same JSON profile through a bind mount and stores PDFs in the `cv_pdfs` volume. The existing Postgres volume stores CV versions and application links. Back up the profile, the PDF directory or volume, and Postgres together to preserve the library. The app still uses one local owner, with owner-scoped records ready for authenticated identities later.

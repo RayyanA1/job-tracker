@@ -86,3 +86,4 @@ export function progress(a: ApplicationInput) {
     ? 'No current stage'
     : `${a.stages[index]!.name} · round ${index + 1}${a.totalRounds ? ` of ${a.totalRounds}` : ''}`;
 }
+export type * from './cvs.ts';

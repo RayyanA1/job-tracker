@@ -83,7 +83,7 @@ describe('composed API routes', () => {
     ]);
     const detail = await request(`/applications/${id}`);
     expect(await detail.json()).toMatchObject({ id, role: 'Engineer' });
-    expect(query.mock.calls[1]![1]).toEqual([id]);
+    expect(query.mock.calls[1]![1]).toEqual([id, 'local']);
   });
   it('rejects invalid payloads and IDs without calling the database', async () => {
     const query = vi.fn();
