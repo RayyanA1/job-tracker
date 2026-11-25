@@ -37,6 +37,7 @@ npm run dev
 Open http://localhost:5173. This starts Postgres, the watched Node API on port 3001, and Vite on port 5173. Stop the containerized app first (`docker compose stop app`) if it already occupies port 3001. Ctrl+C stops the development servers; `npm stop` also stops Postgres.
 
 ```sh
+npm run lint
 npm run typecheck
 npm test
 npm run build
@@ -61,14 +62,15 @@ npm run format
 - `apps/web/src/api`: typed application API methods and the shared fetch client.
 - `apps/web/src/styles`: only shared global defaults and control/utility styles.
 - `apps/api/src/index.ts`: database initialization and server lifecycle.
-- `apps/api/src/app.ts`: Express composition, static frontend, and shared error handling.
+- `apps/api/src/app.ts`: Express composition, dependency wiring, and static frontend. Shared HTTP helpers live in `apps/api/src/http`.
 - `apps/api/src/health/routes.ts`: database-backed health endpoint.
-- `apps/api/src/applications`: application routes/validation and a separate Postgres repository.
+- `apps/api/src/applications`: application routes and validation in `http/`, with Postgres queries in `persistence/`.
+- `apps/api/src/cvs`: CV request handling in `http/`, workflows in `services/`, profile rules in `entities/`, and storage in `persistence/`. External integrations live in `clients/`, with separate parsing and PDF rendering folders.
 - `apps/api/src/db`: database pool creation and schema initialization.
 - `packages/shared`: shared TypeScript models, Zod validation, and workflow tests.
 - `compose.yaml`: app + Postgres 17, health checks, persistent volume.
 
-Reuses the Node Starter's ES modules, TypeScript, Pino logger implementation, Vitest testing convention, and Prettier/ESLint configurations. The starter remains untouched. ESLint configuration is retained for extension; no lint script/dependencies are installed in v1.
+Reuses the Node Starter's ES modules, TypeScript, Pino logger implementation, Vitest testing convention, and Prettier/ESLint configurations. ESLint also checks API import boundaries between HTTP, services, and persistence.
 
 The API creates its initial `applications` table on startup. Each application is one validated JSONB document; questions and ordered stages are saved atomically with it. Metadata lives in typed UUID and timestamp columns. This keeps v1 compact while leaving room for later migrations and normalized tables.
 

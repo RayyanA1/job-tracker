@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CvBullet, CvDocument } from '@tracker/shared';
-import { fitCv, renderCv } from './pdf.ts';
+import { fitCv } from './cv-pdf-fit.ts';
+import { renderCv } from './cv-pdf.renderer.ts';
 
 function bullet(priority: number): CvBullet {
   return {
@@ -75,7 +76,7 @@ describe('one-page generated CVs', () => {
       projects: [],
     };
     await expect(fitCv(overcrowded)).rejects.toMatchObject({
-      status: 422,
+      code: 'invalid-content',
       message: expect.stringContaining('Shorten long entries in your profile'),
     });
   });

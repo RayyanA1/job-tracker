@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import type { RequestHandler } from 'express';
 import { applicationSchema } from '@tracker/shared';
-import type { ApplicationsRepository } from './repository.ts';
+import type { ApplicationsRepository } from '../persistence/application.repository.ts';
+import { formatValidationIssues } from '../../http/validation.ts';
+
 const validateId: RequestHandler = (req, res, next) => {
   if (!/^[0-9a-f-]{36}$/i.test(String(req.params['id']))) {
     res.status(400).json({ error: 'Invalid application ID' });
@@ -13,9 +15,10 @@ const validateApplication: RequestHandler = (req, res, next) => {
   const parsed = applicationSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
-      error: parsed.error.issues
-        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-        .join('; '),
+      error: formatValidationIssues(parsed.error.issues, {
+        separator: '; ',
+        includeEmptyPath: true,
+      }),
     });
     return;
   }
