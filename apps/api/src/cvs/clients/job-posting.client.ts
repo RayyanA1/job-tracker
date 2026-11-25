@@ -3,7 +3,22 @@ import { request as http } from 'node:http';
 import { request as https } from 'node:https';
 import { isIP } from 'node:net';
 import ipaddr from 'ipaddr.js';
-import { CvError, unreadablePosting } from '../cv.errors.ts';
+import { CvError } from '../cv.errors.ts';
+
+export class JobPostingFetchError extends Error {
+  constructor(
+    public readonly reason:
+      | 'dns-failed'
+      | 'invalid-redirect'
+      | 'unexpected-http-status'
+      | 'unexpected-content-type'
+      | 'response-too-large'
+      | 'redirect-limit',
+    public readonly statusCode?: number,
+  ) {
+    super(reason);
+  }
+}
 
 export function publicAddress(address: string) {
   const ip = ipaddr.process(address);
@@ -41,7 +56,7 @@ function fetchPage(
           try {
             resolve(new URL(res.headers.location, url));
           } catch {
-            reject(unreadablePosting());
+            reject(new JobPostingFetchError('invalid-redirect', status));
           }
           return;
         }
@@ -52,7 +67,14 @@ function fetchPage(
           )
         ) {
           res.destroy();
-          reject(unreadablePosting());
+          reject(
+            new JobPostingFetchError(
+              status !== 200
+                ? 'unexpected-http-status'
+                : 'unexpected-content-type',
+              status,
+            ),
+          );
           return;
         }
         const chunks: Buffer[] = [];
@@ -60,7 +82,7 @@ function fetchPage(
         res.on('data', (chunk: Buffer) => {
           size += chunk.length;
           if (size > 2_000_000) {
-            res.destroy(unreadablePosting());
+            res.destroy(new JobPostingFetchError('response-too-large', status));
             return;
           }
           chunks.push(chunk);
@@ -89,7 +111,9 @@ export async function fetchJobPosting(source: string): Promise<string> {
       throw new CvError('invalid-input', 'Use a public job URL.');
     const addresses = isIP(hostname)
       ? [{ address: hostname }]
-      : await lookup(hostname, { all: true });
+      : await lookup(hostname, { all: true }).catch(() => {
+          throw new JobPostingFetchError('dns-failed');
+        });
     signal.throwIfAborted();
     if (
       !addresses.length ||
@@ -101,5 +125,5 @@ export async function fetchJobPosting(source: string): Promise<string> {
     if (typeof result === 'string') return result;
     url = result;
   }
-  throw unreadablePosting();
+  throw new JobPostingFetchError('redirect-limit');
 }

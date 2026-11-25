@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../../utils/logger.ts';
+import { JobPostingFetchError } from '../clients/job-posting.client.ts';
 import { createGeminiGenerator } from '../clients/gemini.client.ts';
 import { createJobPostingImporter } from './job-posting.service.ts';
 
@@ -32,7 +34,12 @@ function modelResponse(result: unknown) {
   });
 }
 
+beforeEach(() => {
+  vi.spyOn(logger, 'warn').mockImplementation(() => {});
+});
+
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -63,18 +70,60 @@ describe('job posting import', () => {
   });
 
   it.each([
-    { ...extraction, found: false },
-    { ...extraction, description: '   ' },
+    [{ ...extraction, found: false }, 'posting-not-found'],
+    [{ ...extraction, description: '   ' }, 'empty-description'],
   ])(
     'offers manual paste when the model finds no readable posting',
-    async (result) => {
+    async (result, reason) => {
       const { importPosting } = setup(modelResponse(result));
       await expect(importPosting(url)).rejects.toMatchObject({
         code: 'invalid-content',
         message: expect.stringContaining('Paste the job description'),
       });
+      expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ stage: 'extract', reason }),
+        'Job posting import failed',
+      );
     },
   );
+
+  it('logs an upstream status without exposing the URL or calling Gemini', async () => {
+    const { importPosting, fetchPosting, fetchModel } = setup(
+      modelResponse(extraction),
+    );
+    fetchPosting.mockRejectedValue(
+      new JobPostingFetchError('unexpected-http-status', 403),
+    );
+    await expect(importPosting(`${url}?token=secret`)).rejects.toMatchObject({
+      code: 'invalid-content',
+    });
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      {
+        hostname: 'example.com',
+        stage: 'fetch',
+        reason: 'unexpected-http-status',
+        statusCode: 403,
+        elapsedMs: expect.any(Number),
+      },
+      'Job posting import failed',
+    );
+    expect(fetchModel).not.toHaveBeenCalled();
+  });
+
+  it('logs an empty page without calling Gemini', async () => {
+    const { importPosting, fetchPosting, fetchModel } = setup(
+      modelResponse(extraction),
+    );
+    fetchPosting.mockResolvedValue('<script>window.data = {};</script>');
+    await expect(importPosting(url)).rejects.toMatchObject({
+      code: 'invalid-content',
+    });
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ stage: 'prepare', reason: 'empty-page' }),
+      'Job posting import failed',
+    );
+    expect(fetchModel).not.toHaveBeenCalled();
+  });
 
   it('rejects invalid model output and keeps the manual paste path', async () => {
     const { importPosting } = setup(
@@ -95,5 +144,12 @@ describe('job posting import', () => {
       message: expect.stringContaining('paste the job description'),
     });
     expect(fetchModel).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        stage: 'extract',
+        reason: 'provider-rate-limited',
+      }),
+      'Job posting import failed',
+    );
   });
 });
