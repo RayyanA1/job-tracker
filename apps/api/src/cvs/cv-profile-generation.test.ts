@@ -2,14 +2,11 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { buildDocument } from './generation.ts';
-import { extractPosting, publicAddress } from './postings.ts';
-import {
-  loadProfile,
-  parseLegacyProfile,
-  parseProfileJson,
-} from './profile.ts';
-import { renderCv } from './pdf.ts';
+import { buildDocument } from './services/cv-generation.ts';
+import { parseProfileJson } from './entities/cv-profile.entity.ts';
+import { parseLegacyProfile } from './parsing/cv-profile-legacy.parser.ts';
+import { loadProfile } from './persistence/cv-profile.store.ts';
+import { renderCv } from './rendering/cv-pdf.renderer.ts';
 
 const legacyProfile = `
 ## Identity
@@ -171,35 +168,5 @@ describe('profile and CV generation', () => {
       'private@example.com',
     );
     expect((await renderCv(result)).pages).toBe(1);
-  });
-});
-
-describe('job posting import', () => {
-  it('extracts structured job data and discards markup', () => {
-    const html = `<script type="application/ld+json">{"@graph": [{"@type":"JobPosting","title":"Backend Engineer","description":"<p>Build &amp; maintain services.</p>","hiringOrganization":{"name":"Example"}}]}</script>`;
-    expect(extractPosting(html, job.url)).toEqual({
-      url: job.url,
-      title: 'Backend Engineer',
-      company: 'Example',
-      description: 'Build & maintain services.',
-    });
-  });
-
-  it('offers paste fallback for an unreadable page', () => {
-    expect(() =>
-      extractPosting('<main>Sign in to view this job</main>', job.url),
-    ).toThrow('Paste the job description');
-  });
-
-  it.each([
-    '127.0.0.1',
-    '169.254.1.2',
-    '192.168.10.10',
-    '::1',
-    '::ffff:10.12.13.14',
-    'fe80::1',
-    '64:ff9b::1',
-  ])('blocks non-public network address %s', (address) => {
-    expect(publicAddress(address)).toBe(false);
   });
 });

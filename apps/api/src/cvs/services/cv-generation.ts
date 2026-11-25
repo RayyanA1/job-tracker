@@ -7,7 +7,8 @@ import type {
   CvProfileEntry,
   JobPosting,
 } from '@tracker/shared';
-import { CvError } from './profile.ts';
+import type { Generate } from '../clients/gemini.client.ts';
+import { CvError } from '../cv.errors.ts';
 
 const id = z.string().max(100);
 const rewrite = z.strictObject({
@@ -25,75 +26,6 @@ const selection = z.strictObject({
 const verification = z.strictObject({
   supported: z.array(z.boolean()).max(13),
 });
-type Generate = <T>(
-  instruction: string,
-  input: unknown,
-  schema: z.ZodType<T>,
-) => Promise<T>;
-
-export const generateWithGemini: Generate = async (
-  instruction,
-  input,
-  schema,
-) => {
-  const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key)
-    throw new CvError(
-      503,
-      'Set GEMINI_API_KEY in .env and restart the tracker.',
-    );
-  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: 'POST',
-        signal: AbortSignal.timeout(40_000),
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: instruction }] },
-          contents: [
-            { role: 'user', parts: [{ text: JSON.stringify(input) }] },
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            responseJsonSchema: z.toJSONSchema(schema, {
-              override: ({ jsonSchema }) => {
-                delete jsonSchema.$schema;
-                delete jsonSchema.minLength;
-                delete jsonSchema.maxLength;
-              },
-            }),
-          },
-        }),
-      },
-    );
-    if (response.status === 429)
-      throw new CvError(429, 'Gemini is rate limited. Try again shortly.');
-    if (!response.ok)
-      throw new CvError(
-        502,
-        `Gemini returned an error (${response.status}). Check your key and model settings.`,
-      );
-    const payload = (await response.json()) as {
-      candidates?: {
-        content?: { parts?: { text?: string; thought?: boolean }[] };
-      }[];
-    };
-    const answer = payload.candidates?.[0]?.content?.parts
-      ?.filter((part) => !part.thought)
-      .map((part) => part.text ?? '')
-      .join('');
-    return schema.parse(JSON.parse(answer || 'null'));
-  } catch (error) {
-    if (error instanceof CvError) throw error;
-    throw new CvError(
-      502,
-      'Gemini could not return a valid CV response. Try again.',
-    );
-  }
-};
-
 function factText(entry: CvProfileEntry) {
   return [
     entry.name,
@@ -121,11 +53,11 @@ function exactBullet(entry: CvProfileEntry) {
 export async function buildDocument(
   profile: CvProfile,
   job: JobPosting,
-  generate = generateWithGemini,
+  generate: Generate,
 ): Promise<CvDocument> {
   if (!profile.name || !profile.headlines.length) {
     throw new CvError(
-      422,
+      'invalid-content',
       'Fill in your name and supported CV headlines in your private profile before generating.',
     );
   }
@@ -151,7 +83,7 @@ export async function buildDocument(
 
   const unsupported = () =>
     new CvError(
-      502,
+      'provider-failed',
       'Gemini selected a source outside your profile. Generate a new draft.',
     );
   const headline = profile.headlines[chosen.headlineIndex];
@@ -189,7 +121,10 @@ export async function buildDocument(
       )
     : { supported: [] };
   if (checked.supported.length !== claims.length)
-    throw new CvError(502, 'Gemini could not verify the draft. Try again.');
+    throw new CvError(
+      'provider-failed',
+      'Gemini could not verify the draft. Try again.',
+    );
 
   const approved = new Set(
     claims.filter((claim, index) => {

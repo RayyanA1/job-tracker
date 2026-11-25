@@ -1,10 +1,18 @@
 import express from 'express';
 import type { Pool } from 'pg';
 import { fileURLToPath } from 'node:url';
-import { logger } from './utils/logger.ts';
-import { createApplicationsRouter } from './applications/routes.ts';
-import { createApplicationsRepository } from './applications/repository.ts';
-import { createCvRouter } from './cvs/routes.ts';
+import { handleApiError } from './http/error-handler.ts';
+import { createApplicationsRouter } from './applications/http/application.routes.ts';
+import { createApplicationsRepository } from './applications/persistence/application.repository.ts';
+import { generateWithGemini } from './cvs/clients/gemini.client.ts';
+import { createCvRouter } from './cvs/http/cv.routes.ts';
+import { createCvAttachmentRepository } from './cvs/persistence/cv-attachment.repository.ts';
+import { createCvPdfStore } from './cvs/persistence/cv-pdf.store.ts';
+import { loadProfile } from './cvs/persistence/cv-profile.store.ts';
+import { createCvVersionRepository } from './cvs/persistence/cv-version.repository.ts';
+import { createCvDraftService } from './cvs/services/cv-draft.service.ts';
+import { createCvLibraryService } from './cvs/services/cv-library.service.ts';
+import { importPosting } from './cvs/services/job-posting.service.ts';
 import { createHealthRouter } from './health/routes.ts';
 export function createApp(pool: Pool) {
   const app = express();
@@ -18,7 +26,23 @@ export function createApp(pool: Pool) {
     '/api/applications',
     createApplicationsRouter(createApplicationsRepository(pool, owner)),
   );
-  app.use('/api/cvs', createCvRouter(pool, owner));
+  const versions = createCvVersionRepository(pool, owner);
+  const loadOwnerProfile = () => loadProfile(owner);
+  app.use(
+    '/api/cvs',
+    createCvRouter({
+      versions,
+      loadProfile: loadOwnerProfile,
+      importPosting,
+      createDraft: createCvDraftService({
+        loadProfile: loadOwnerProfile,
+        generate: generateWithGemini,
+        versions,
+      }),
+      library: createCvLibraryService(versions, createCvPdfStore(owner)),
+      attachments: createCvAttachmentRepository(pool, owner),
+    }),
+  );
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
@@ -30,21 +54,6 @@ export function createApp(pool: Pool) {
       fileURLToPath(new URL('../../web/dist/index.html', import.meta.url)),
     ),
   );
-  app.use(
-    (
-      err: Error & { status?: number },
-      _req: express.Request,
-      res: express.Response,
-      _next: express.NextFunction,
-    ) => {
-      logger.error(err);
-      res.status(err.status ?? 500).json({
-        error:
-          err.status === 400
-            ? 'Invalid JSON'
-            : 'Unable to save or load data. Please try again.',
-      });
-    },
-  );
+  app.use(handleApiError);
   return app;
 }

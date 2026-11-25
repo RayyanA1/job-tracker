@@ -1,54 +1,28 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import type { Pool } from 'pg';
-import { createApp } from './app.ts';
+import { describe, expect, it, vi } from 'vitest';
+import { json, startApi } from './app.test-helpers.ts';
 
-let server: Server | undefined;
-afterEach(async () => {
-  if (server)
-    await new Promise<void>((resolve, reject) =>
-      server!.close((error) => (error ? reject(error) : resolve())),
-    );
-  server = undefined;
-});
-async function start(query: ReturnType<typeof vi.fn>) {
-  const app = createApp({ query } as unknown as Pool);
-  server = app.listen(0, '127.0.0.1');
-  await new Promise<void>((resolve) => server!.once('listening', resolve));
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  return (path: string, options?: RequestInit) =>
-    fetch(`${base}/api${path}`, options);
-}
-const json = (method: string, body: unknown): RequestInit => ({
-  method,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body),
-});
 const id = '5c060de1-f664-43d1-bad1-eec385674425';
 
 describe('composed API routes', () => {
   it('checks the database through the health router', async () => {
     const query = vi.fn().mockResolvedValue({ rows: [] });
-    const request = await start(query);
+    const request = await startApi(query);
     const response = await request('/health');
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
     expect(query).toHaveBeenCalledWith('SELECT 1');
   });
   it('creates with defaults and returns application metadata', async () => {
-    const query = vi
-      .fn()
-      .mockImplementation(async (_sql, values) => ({
-        rows: [
-          {
-            id: values[0],
-            data: values[1],
-            updated_at: new Date('2026-01-01T00:00:00Z'),
-          },
-        ],
-      }));
-    const request = await start(query);
+    const query = vi.fn().mockImplementation(async (_sql, values) => ({
+      rows: [
+        {
+          id: values[0],
+          data: values[1],
+          updated_at: new Date('2026-01-01T00:00:00Z'),
+        },
+      ],
+    }));
+    const request = await startApi(query);
     const response = await request(
       '/applications',
       json('POST', { company: 'Acme', role: 'Engineer' }),
@@ -65,18 +39,16 @@ describe('composed API routes', () => {
     expect(query.mock.calls[0]![0]).toContain('INSERT INTO applications');
   });
   it('lists and retrieves stored records through the repository', async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValue({
-        rows: [
-          {
-            id,
-            data: { company: 'Acme', role: 'Engineer' },
-            updated_at: new Date('2026-01-01T00:00:00Z'),
-          },
-        ],
-      });
-    const request = await start(query);
+    const query = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          id,
+          data: { company: 'Acme', role: 'Engineer' },
+          updated_at: new Date('2026-01-01T00:00:00Z'),
+        },
+      ],
+    });
+    const request = await startApi(query);
     const list = await request('/applications');
     expect(await list.json()).toEqual([
       expect.objectContaining({ id, company: 'Acme' }),
@@ -87,7 +59,7 @@ describe('composed API routes', () => {
   });
   it('rejects invalid payloads and IDs without calling the database', async () => {
     const query = vi.fn();
-    const request = await start(query);
+    const request = await startApi(query);
     expect(
       (await request('/applications', json('POST', { company: '' }))).status,
     ).toBe(400);
@@ -105,7 +77,7 @@ describe('composed API routes', () => {
         rows: [{ id: values[0], data: values[1], updated_at: new Date() }],
       }))
       .mockResolvedValue({ rows: [] });
-    const request = await start(query);
+    const request = await startApi(query);
     const response = await request(
       `/applications/${id}`,
       json('PUT', {
@@ -143,7 +115,7 @@ describe('composed API routes', () => {
     ).toBe(404);
   });
   it('keeps unknown API routes and malformed JSON as JSON errors', async () => {
-    const request = await start(vi.fn());
+    const request = await startApi(vi.fn());
     expect((await request('/unknown')).status).toBe(404);
     const response = await request('/applications', {
       method: 'POST',

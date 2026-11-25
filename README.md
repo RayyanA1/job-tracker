@@ -61,9 +61,10 @@ npm run format
 - `apps/web/src/api`: typed application API methods and the shared fetch client.
 - `apps/web/src/styles`: only shared global defaults and control/utility styles.
 - `apps/api/src/index.ts`: database initialization and server lifecycle.
-- `apps/api/src/app.ts`: Express composition, static frontend, and shared error handling.
+- `apps/api/src/app.ts`: Express composition, dependency wiring, and static frontend. Shared HTTP helpers live in `apps/api/src/http`.
 - `apps/api/src/health/routes.ts`: database-backed health endpoint.
-- `apps/api/src/applications`: application routes/validation and a separate Postgres repository.
+- `apps/api/src/applications`: application routes and validation in `http/`, with Postgres queries in `persistence/`.
+- `apps/api/src/cvs`: CV request handling in `http/`, workflows in `services/`, profile rules in `entities/`, and storage in `persistence/`. External integrations live in `clients/`, with separate parsing and PDF rendering folders.
 - `apps/api/src/db`: database pool creation and schema initialization.
 - `packages/shared`: shared TypeScript models, Zod validation, and workflow tests.
 - `compose.yaml`: app + Postgres 17, health checks, persistent volume.

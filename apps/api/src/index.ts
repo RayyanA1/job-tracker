@@ -1,7 +1,8 @@
 import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.ts';
-import { createPool, initializeDatabase } from './db/index.ts';
+import { createPool } from './db/postgres.client.ts';
+import { initializeDatabase } from './db/initialize.ts';
 import { logger } from './utils/logger.ts';
 try {
   loadEnvFile(fileURLToPath(new URL('../../../.env', import.meta.url)));
