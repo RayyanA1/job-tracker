@@ -54,5 +54,3 @@ Here is an example `entries` array. Replace the example content with your own fa
   }
 ]
 ```
-
-If you already have a private `profile.md`, the app copies its career facts and IDs into `profile.json` on the first profile load. Edit the JSON file thereafter.

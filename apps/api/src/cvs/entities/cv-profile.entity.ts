@@ -28,11 +28,11 @@ const profileSchema = z.strictObject({
     .default([]),
 });
 
-export function invalidProfile(message: string): never {
+function invalidProfile(message: string): never {
   throw new CvError('invalid-content', `CV profile: ${message}`);
 }
 
-export function validateProfile(input: unknown): CvProfile {
+function validateProfile(input: unknown): CvProfile {
   const result = profileSchema.safeParse(input);
   if (!result.success) {
     const issue = result.error.issues[0]!;
