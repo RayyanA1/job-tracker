@@ -37,6 +37,7 @@ npm run dev
 Open http://localhost:5173. This starts Postgres, the watched Node API on port 3001, and Vite on port 5173. Stop the containerized app first (`docker compose stop app`) if it already occupies port 3001. Ctrl+C stops the development servers; `npm stop` also stops Postgres.
 
 ```sh
+npm run lint
 npm run typecheck
 npm test
 npm run build
@@ -69,7 +70,7 @@ npm run format
 - `packages/shared`: shared TypeScript models, Zod validation, and workflow tests.
 - `compose.yaml`: app + Postgres 17, health checks, persistent volume.
 
-Reuses the Node Starter's ES modules, TypeScript, Pino logger implementation, Vitest testing convention, and Prettier/ESLint configurations. The starter remains untouched. ESLint configuration is retained for extension; no lint script/dependencies are installed in v1.
+Reuses the Node Starter's ES modules, TypeScript, Pino logger implementation, Vitest testing convention, and Prettier/ESLint configurations. ESLint also checks API import boundaries between HTTP, services, and persistence.
 
 The API creates its initial `applications` table on startup. Each application is one validated JSONB document; questions and ordered stages are saved atomically with it. Metadata lives in typed UUID and timestamp columns. This keeps v1 compact while leaving room for later migrations and normalized tables.
 
